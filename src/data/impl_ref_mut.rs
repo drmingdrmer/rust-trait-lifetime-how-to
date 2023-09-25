@@ -24,7 +24,9 @@ impl<'d> RefMut<'d> {
         [&*self.writable].into_iter().chain(self.frozen.iter_levels())
     }
 
-    pub fn to_ref(&self) -> Ref {
+    /// Because writable is a mutable reference, we can't return a reference to it.
+    /// But instead, we can only reborrow it, with the same lifetime of `self`
+    pub fn to_ref<'a>(&'a self) -> Ref<'a> {
         Ref::new(&*self.writable, &self.frozen)
     }
 
@@ -62,7 +64,7 @@ where
 
     type RangeFut<'f, Q, R> = impl Future<Output = BoxStream<'f, (K, K::V)>>
         where
-            Self: 'f,
+            // Self: 'f,
             'ro_d: 'f,
             K: Borrow<Q>,
             R: RangeBounds<Q> + Send + Sync + Clone,

@@ -62,7 +62,7 @@ where
 
     type RangeFut<'f, Q, R> = impl Future<Output = BoxStream<'f, (K, K::V)>>
     where
-        Self: 'f,
+        // Self: 'f,
         'ro_d: 'f,
         K: Borrow<Q>,
         R: RangeBounds<Q> + Send + Sync + Clone,
@@ -71,7 +71,7 @@ where
 
     fn range<'f, Q, R>(self, range: R) -> Self::RangeFut<'f, Q, R>
     where
-        Self: 'f,
+        // Self: 'f,
         'ro_d: 'f,
         K: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,

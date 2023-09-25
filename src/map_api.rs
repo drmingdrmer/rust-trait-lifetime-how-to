@@ -33,7 +33,7 @@ where K: MapKey
 
     type RangeFut<'f, Q, R>: Future<Output = BoxStream<'f, (K, K::V)>>
     where
-        Self: 'f,
+        // Self: 'f,
         'd: 'f,
         K: Borrow<Q>,
         R: RangeBounds<Q> + Send + Sync + Clone,
