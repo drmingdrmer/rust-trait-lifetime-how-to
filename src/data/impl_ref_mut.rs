@@ -33,83 +33,6 @@ impl<'d> RefMut<'d> {
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// &RefMut ///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////
-
-impl<'ro_me, 'ro_d, K> MapApiRO<'ro_d, K> for &'ro_me RefMut<'ro_d>
-where
-    K: MapKey,
-    for<'him> &'him Level: MapApiRO<'him, K>,
-{
-    type GetFut<'f, Q> = impl Future<Output =K::V> + 'f
-        where Self: 'f,
-              'ro_me: 'f,
-              'ro_d: 'f,
-              K: Borrow<Q>,
-              Q: Ord + Send + Sync + ?Sized,
-              Q: 'f;
-
-    fn get<'f, Q>(self, key: &'f Q) -> Self::GetFut<'f, Q>
-    where
-        'ro_me: 'f,
-        'ro_d: 'f,
-        K: Borrow<Q>,
-        Q: Ord + Send + Sync + ?Sized,
-    {
-        self.to_ref().get(key)
-    }
-
-    type RangeFut<'f, Q, R> = impl Future<Output = BoxStream<'f, (K, K::V)>>
-        where
-            Self: 'f,
-            'ro_d: 'f,
-            K: Borrow<Q>,
-            R: RangeBounds<Q> + Send + Sync + Clone,
-            Q: Ord + Send + Sync + ?Sized,
-            Q: 'f;
-
-    fn range<'f, Q, R>(self, range: R) -> Self::RangeFut<'f, Q, R>
-    where
-        // 'ro_me: 'f,
-        'ro_d: 'f,
-        K: Borrow<Q>,
-        Q: Ord + Send + Sync + ?Sized,
-        R: RangeBounds<Q> + Clone + Send + Sync,
-    {
-        self.to_ref().range(range)
-    }
-}
-
-impl<'me, 'd, K> MapApi<'me, 'd, K> for &'me mut RefMut<'d>
-where
-    K: MapKey,
-    for<'e> &'e Level: MapApiRO<'e, K>,
-    for<'him> &'him mut Level: MapApi<'him, 'him, K>,
-{
-    type SetFut<'f> = impl Future<Output = (K::V, K::V)> + 'f
-    where
-        Self: 'f,
-        'me: 'f;
-
-    fn set<'f>(self, key: K, value: Option<K::V>) -> Self::SetFut<'f>
-    where
-        'me: 'f,
-        'd: 'f,
-    {
-        async move {
-            let prev = self.get(&key).await;
-
-            let (_prev, res) = self.writable.set(key.clone(), value).await;
-            (prev, res)
-        }
-    }
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// RefMut ////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////
-
 impl<'ro_d, K> MapApiRO<'ro_d, K> for RefMut<'ro_d>
 where
     K: MapKey,
@@ -168,7 +91,8 @@ where
         'd: 'f,
     {
         async move {
-            let prev = (&self).get(&key).await;
+            let prev = self.to_ref().get(&key).await;
+            // let prev = (&self).get(&key).await;
 
             let (_prev, res) = self.writable.set(key.clone(), value).await;
             (prev, res)
@@ -218,13 +142,12 @@ mod tests {
                 kv: Default::default(),
             };
 
-            let mut rm = RefMut::new(&mut d, &static_levels);
-            let got = (&rm).get(&k()).await;
-            println!("LeveledRefMut: {:?}", got);
+            let rm = RefMut::new(&mut d, &static_levels);
 
-            let res = (&mut rm).set(k(), Some(Val(5))).await;
+            let res = rm.set(k(), Some(Val(5))).await;
             println!("LeveledRefMut::set() res: {:?}", res);
 
+            let rm = RefMut::new(&mut d, &static_levels);
             let got = { rm }.get(&k()).await;
             println!("LeveledRefMut: {:?}", got);
         }
