@@ -24,10 +24,11 @@ impl StaticLevels {
     }
 }
 
-impl<'ro_d, K> MapApiRO<'ro_d, K> for &'ro_d StaticLevels
+impl<'ro_d, 'ro_rf, K> MapApiRO<'ro_d, 'ro_rf, K> for &'ro_d StaticLevels
 where
     K: MapKey,
-    for<'e> &'e Level: MapApiRO<'e, K>,
+    'ro_d: 'ro_rf,
+    for<'e, 'e_rf> &'e Level: MapApiRO<'e, 'e_rf, K>,
 {
     type GetFut<'f,Q> = impl Future<Output=K::V> + 'f
         where
@@ -57,18 +58,15 @@ where
         }
     }
 
-    type RangeFut<'f, Q, R> = impl Future<Output = BoxStream<'f, (K, K::V)>>
+    type RangeFut<Q, R> = impl Future<Output = BoxStream<'ro_rf, (K, K::V)>>
         where
-            Self: 'f,
-            'ro_d: 'f,
             K: Borrow<Q>,
             R: RangeBounds<Q> + Send + Sync + Clone,
             Q: Ord + Send + Sync + ?Sized,
-            Q: 'f;
+            Q: 'ro_rf;
 
-    fn range<'f, Q, R>(self, range: R) -> Self::RangeFut<'f, Q, R>
+    fn range<Q, R>(self, range: R) -> Self::RangeFut<Q, R>
     where
-        'ro_d: 'f,
         K: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,
         R: RangeBounds<Q> + Clone + Send + Sync,

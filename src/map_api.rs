@@ -14,8 +14,13 @@ impl MapKey for String {
     type V = Val;
 }
 
-pub trait MapApiRO<'d, K>: Send + Sync
-where K: MapKey
+/// lifetime parameters:
+/// - `'d`: the lifetime of the data it references, or itself if it owns the data.
+/// - `'rf`: the lifetime of the RangeFuture.
+pub trait MapApiRO<'d, 'rf, K>: Send + Sync
+where
+    K: MapKey,
+    'd: 'rf,
 {
     type GetFut<'f, Q>: Future<Output = K::V>
     where
@@ -31,16 +36,14 @@ where K: MapKey
         Q: Ord + Send + Sync + ?Sized,
         Q: 'f;
 
-    type RangeFut<'f, Q, R>: Future<Output = BoxStream<'f, (K, K::V)>>
+    type RangeFut<Q, R>: Future<Output = BoxStream<'rf, (K, K::V)>>
     where
-        // Self: 'f,
-        'd: 'f,
         K: Borrow<Q>,
         R: RangeBounds<Q> + Send + Sync + Clone,
         Q: Ord + Send + Sync + ?Sized,
-        Q: 'f;
+        Q: 'rf;
 
-    fn range<'f, Q, R>(self, range: R) -> Self::RangeFut<'f, Q, R>
+    fn range<Q, R>(self, range: R) -> Self::RangeFut<Q, R>
     where
         K: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,
@@ -49,8 +52,10 @@ where K: MapKey
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub trait MapApi<'me, 'd, K>: MapApiRO<'d, K>
-where K: MapKey
+pub trait MapApi<'me, 'd, K>: for<'rf> MapApiRO<'d, 'rf, K>
+where
+    K: MapKey,
+    'me: 'd,
 {
     type SetFut<'f>: Future<Output = (K::V, K::V)>
     where

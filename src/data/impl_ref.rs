@@ -29,10 +29,11 @@ impl<'d> Ref<'d> {
 // &Ref //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'ro_me, 'ro_d, K> MapApiRO<'ro_d, K> for &'ro_me Ref<'ro_d>
+impl<'ro_me, 'ro_d, 'ro_rf, K> MapApiRO<'ro_d, 'ro_rf, K> for &'ro_me Ref<'ro_d>
 where
     K: MapKey,
-    for<'him> &'him Level: MapApiRO<'him, K>,
+    'ro_d: 'ro_rf,
+    for<'him, 'him_rf> &'him Level: MapApiRO<'him, 'him_rf, K>,
 {
     type GetFut<'f, Q> = impl Future<Output =K::V> + 'f
         where Self: 'f,
@@ -60,19 +61,15 @@ where
         }
     }
 
-    type RangeFut<'f, Q, R> = impl Future<Output = BoxStream<'f, (K, K::V)>>
+    type RangeFut<Q, R> = impl Future<Output = BoxStream<'ro_rf, (K, K::V)>>
     where
-        // Self: 'f,
-        'ro_d: 'f,
         K: Borrow<Q>,
         R: RangeBounds<Q> + Send + Sync + Clone,
         Q: Ord + Send + Sync + ?Sized,
-        Q: 'f;
+        Q: 'ro_rf;
 
-    fn range<'f, Q, R>(self, range: R) -> Self::RangeFut<'f, Q, R>
+    fn range<Q, R>(self, range: R) -> Self::RangeFut<Q, R>
     where
-        // Self: 'f,
-        'ro_d: 'f,
         K: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,
         R: RangeBounds<Q> + Clone + Send + Sync,
@@ -97,10 +94,11 @@ where
 // Ref ///////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 
-impl<'ro_d, K> MapApiRO<'ro_d, K> for Ref<'ro_d>
+impl<'ro_d, 'ro_rf, K> MapApiRO<'ro_d, 'ro_rf, K> for Ref<'ro_d>
 where
     K: MapKey,
-    for<'him> &'him Level: MapApiRO<'him, K>,
+    'ro_d: 'ro_rf,
+    for<'him, 'him_rf> &'him Level: MapApiRO<'him, 'him_rf, K>,
 {
     type GetFut<'f, Q> = impl Future<Output =K::V> + 'f
         where Self: 'f,
@@ -118,18 +116,15 @@ where
         async move { (&self).get(key).await }
     }
 
-    type RangeFut<'f, Q, R> = impl Future<Output = BoxStream<'f, (K, K::V)>>
+    type RangeFut<Q, R> = impl Future<Output = BoxStream<'ro_rf,(K, K::V)>>
         where
-            Self: 'f,
-            'ro_d: 'f,
             K: Borrow<Q>,
             R: RangeBounds<Q> + Send + Sync + Clone,
             Q: Ord + Send + Sync + ?Sized,
-            Q: 'f;
+            Q: 'ro_rf;
 
-    fn range<'f, Q, R>(self, range: R) -> Self::RangeFut<'f, Q, R>
+    fn range<Q, R>(self, range: R) -> Self::RangeFut<Q, R>
     where
-        'ro_d: 'f,
         K: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,
         R: RangeBounds<Q> + Clone + Send + Sync,

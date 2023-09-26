@@ -6,14 +6,15 @@ use std::ops::RangeBounds;
 use crate::map_api::MapApiRO;
 use crate::map_api::MapKey;
 
-impl<'ro_me, 'ro_d, K, T> MapApiRO<'ro_d, K> for &'ro_me mut T
+impl<'ro_me, 'ro_d, 'ro_rf, K, T> MapApiRO<'ro_d, 'ro_rf, K> for &'ro_me mut T
 where
     K: MapKey,
-    &'ro_me T: MapApiRO<'ro_d, K>,
+    'ro_d: 'ro_rf,
+    &'ro_me T: MapApiRO<'ro_d, 'ro_rf, K>,
     K: Ord + Send + Sync + 'static,
     T: Send + Sync,
 {
-    type GetFut<'f, Q> = <&'ro_me T as MapApiRO<'ro_d, K>>::GetFut<'f, Q>
+    type GetFut<'f, Q> = <&'ro_me T as MapApiRO<'ro_d, 'ro_rf, K>>::GetFut<'f, Q>
     where
         Self: 'f,
         'ro_me: 'f,
@@ -32,19 +33,15 @@ where
         (&*self).get(key)
     }
 
-    type RangeFut<'f, Q, R> = <&'ro_me T as MapApiRO<'ro_d, K>>::RangeFut<'f, Q,R>
+    type RangeFut<Q, R> = <&'ro_me T as MapApiRO<'ro_d, 'ro_rf, K>>::RangeFut<Q,R>
     where
-        // Self: 'f,
-        'ro_d: 'f,
         K: Borrow<Q>,
         R: RangeBounds<Q> + Send + Sync + Clone,
         Q: Ord + Send + Sync + ?Sized,
-        Q: 'f;
+        Q: 'ro_rf;
 
-    fn range<'f, Q, R>(self, range: R) -> Self::RangeFut<'f, Q, R>
+    fn range<Q, R>(self, range: R) -> Self::RangeFut<Q, R>
     where
-        // Self: 'f,
-        'ro_d: 'f,
         K: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,
         R: RangeBounds<Q> + Clone + Send + Sync,

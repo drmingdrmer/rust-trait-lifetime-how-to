@@ -10,7 +10,9 @@ use crate::map_api::MapApiRO;
 use crate::map_api::MapKey;
 use crate::Level;
 
-impl<'d> MapApiRO<'d, String> for &'d Level {
+impl<'d, 'rf> MapApiRO<'d, 'rf, String> for &'d Level
+where 'd: 'rf
+{
     type GetFut<'f, Q> = impl Future<Output =<String as MapKey>::V> + 'f
         where
             Self: 'f,
@@ -29,18 +31,17 @@ impl<'d> MapApiRO<'d, String> for &'d Level {
         async move { self.kv.get(key).cloned().unwrap_or_default() }
     }
 
-    type RangeFut<'f, Q, R> = impl Future<Output = BoxStream<'f, (String, <String as MapKey>::V)>>
+    type RangeFut<Q, R> = impl Future<Output = BoxStream<'rf, (String, <String as MapKey>::V)>>
         where
-            Self: 'f,
-            'd: 'f,
+            'd: 'rf,
             String: Borrow<Q>,
             R: RangeBounds<Q> + Send + Sync + Clone,
             Q: Ord + Send + Sync + ?Sized,
-            Q: 'f;
+            Q: 'rf;
 
-    fn range<'f, Q, R>(self, range: R) -> Self::RangeFut<'f, Q, R>
+    fn range<Q, R>(self, range: R) -> Self::RangeFut<Q, R>
     where
-        'd: 'f,
+        'd: 'rf,
         String: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,
         R: RangeBounds<Q> + Clone + Send + Sync,
