@@ -42,8 +42,13 @@ impl<'d> RefMut<'d> {
 impl<'ro_me, 'ro_d, 'ro_rf, K> MapApiRO<'ro_d, 'ro_rf, K> for &'ro_me RefMut<'ro_d>
 where
     K: MapKey,
+    Self: 'ro_rf,
+    // Self: 'ro_d,
     'ro_d: 'ro_rf,
-    for<'him, 'him_rf> &'him Level: MapApiRO<'him, 'him_rf, K>,
+
+    &'ro_d Level: MapApiRO<'ro_d, 'ro_rf, K>,
+    // for<'him> &'him Level: MapApiRO<'him, 'ro_rf, K>,
+    // for<'him, 'him_rf> &'him Level: MapApiRO<'him, 'him_rf, K>,
 {
     type GetFut<'f, Q> = impl Future<Output =K::V> + 'f
         where Self: 'f,
@@ -80,12 +85,14 @@ where
     }
 }
 
-impl<'me, 'd, K> MapApi<'me, 'd, K> for &'me mut RefMut<'d>
+impl<'me, 'd, 'rf, K> MapApi<'me, 'd, 'rf, K> for &'me mut RefMut<'d>
 where
     K: MapKey,
-    'me: 'd,
+    'me: 'rf,
+    // 'me: 'd,
+    'd: 'rf,
     for<'e, 'e_rf> &'e Level: MapApiRO<'e, 'e_rf, K>,
-    for<'him> &'him mut Level: MapApi<'him, 'him, K>,
+    for<'him, 'him_rf> &'him mut Level: MapApi<'him, 'him, 'him_rf, K>,
 {
     type SetFut<'f> = impl Future<Output = (K::V, K::V)> + 'f
     where
@@ -149,12 +156,13 @@ where
     }
 }
 
-impl<'me, 'd, K> MapApi<'me, 'd, K> for RefMut<'d>
+impl<'me, 'd, 'rf, K> MapApi<'me, 'd, 'rf, K> for RefMut<'d>
 where
     K: MapKey,
     'me: 'd,
+    'd: 'rf,
     for<'e, 'e_rf> &'e Level: MapApiRO<'e, 'e_rf, K>,
-    for<'him> &'him mut Level: MapApi<'him, 'him, K>,
+    for<'him, 'him_rf> &'him mut Level: MapApi<'him, 'him, 'him_rf, K>,
 {
     type SetFut<'f> = impl Future<Output = (K::V, K::V)> + 'f
         where
@@ -223,6 +231,12 @@ mod tests {
 
             let res = (&mut rm).set(k(), Some(Val(5))).await;
             println!("LeveledRefMut::set() res: {:?}", res);
+
+            // let fu = { rm }.get(&k());
+            // let fu = foo(fu);
+            // fn foo<T: Send>(v: T) -> T {
+            //     v
+            // }
 
             let got = { rm }.get(&k()).await;
             println!("LeveledRefMut: {:?}", got);

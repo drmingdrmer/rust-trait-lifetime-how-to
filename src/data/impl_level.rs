@@ -53,7 +53,9 @@ where 'd: 'rf
     }
 }
 
-impl<'me> MapApi<'me, 'me, String> for &'me mut Level {
+impl<'me, 'rf> MapApi<'me, 'me, 'rf, String> for &'me mut Level
+where 'me: 'rf
+{
     type SetFut<'f> = impl Future<Output = (<String as MapKey>::V, <String as MapKey>::V)> + 'f
         where
             Self: 'f,

@@ -52,10 +52,11 @@ where
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub trait MapApi<'me, 'd, K>: for<'rf> MapApiRO<'d, 'rf, K>
+pub trait MapApi<'me, 'd, 'rf, K>: MapApiRO<'d, 'rf, K>
 where
     K: MapKey,
-    'me: 'd,
+    // 'me: 'd,
+    'd: 'rf,
 {
     type SetFut<'f>: Future<Output = (K::V, K::V)>
     where

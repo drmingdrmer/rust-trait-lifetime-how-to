@@ -33,7 +33,8 @@ impl<'ro_me, 'ro_d, 'ro_rf, K> MapApiRO<'ro_d, 'ro_rf, K> for &'ro_me Ref<'ro_d>
 where
     K: MapKey,
     'ro_d: 'ro_rf,
-    for<'him, 'him_rf> &'him Level: MapApiRO<'him, 'him_rf, K>,
+    &'ro_d Level: MapApiRO<'ro_d, 'ro_rf, K>,
+    // for<'him, 'him_rf> &'him Level: MapApiRO<'him, 'him_rf, K>,
 {
     type GetFut<'f, Q> = impl Future<Output =K::V> + 'f
         where Self: 'f,
@@ -98,7 +99,7 @@ impl<'ro_d, 'ro_rf, K> MapApiRO<'ro_d, 'ro_rf, K> for Ref<'ro_d>
 where
     K: MapKey,
     'ro_d: 'ro_rf,
-    for<'him, 'him_rf> &'him Level: MapApiRO<'him, 'him_rf, K>,
+    &'ro_d Level: MapApiRO<'ro_d, 'ro_rf, K>,
 {
     type GetFut<'f, Q> = impl Future<Output =K::V> + 'f
         where Self: 'f,
