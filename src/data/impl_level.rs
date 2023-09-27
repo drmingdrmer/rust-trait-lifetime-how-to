@@ -52,11 +52,10 @@ impl<'d> MapApiRO<'d, String> for &'d Level {
     }
 }
 
-impl<'me> MapApi<'me, 'me, String> for &'me mut Level {
+impl<'me> MapApi<'me, String> for &'me mut Level {
     type SetFut<'f> = impl Future<Output = (<String as MapKey>::V, <String as MapKey>::V)> + 'f
         where
             Self: 'f,
-            'me : 'f
     ;
 
     fn set<'f>(

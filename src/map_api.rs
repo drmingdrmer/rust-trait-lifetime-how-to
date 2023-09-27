@@ -49,13 +49,11 @@ where K: MapKey
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub trait MapApi<'me, 'd, K>: MapApiRO<'d, K>
+pub trait MapApi<'d, K>: MapApiRO<'d, K>
 where K: MapKey
 {
     type SetFut<'f>: Future<Output = (K::V, K::V)>
-    where
-        Self: 'f,
-        'me: 'f;
+    where Self: 'f;
 
     /// Set an entry and returns the old value and the new value.
     fn set<'f>(self, key: K, value: Option<K::V>) -> Self::SetFut<'f>;

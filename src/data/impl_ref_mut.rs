@@ -74,11 +74,12 @@ where
     }
 }
 
-impl<'me, 'd, K> MapApi<'me, 'd, K> for RefMut<'d>
+impl<'me, K> MapApi<'me, K> for RefMut<'me>
 where
     K: MapKey,
+    // TODO: use 'me?
     for<'e> &'e Level: MapApiRO<'e, K>,
-    for<'him> &'him mut Level: MapApi<'him, 'him, K>,
+    for<'him> &'him mut Level: MapApi<'him, K>,
 {
     type SetFut<'f> = impl Future<Output = (K::V, K::V)> + 'f
         where
@@ -88,7 +89,7 @@ where
     fn set<'f>(self, key: K, value: Option<K::V>) -> Self::SetFut<'f>
     where
         'me: 'f,
-        'd: 'f,
+        'me: 'f,
     {
         async move {
             let prev = self.to_ref().get(&key).await;
