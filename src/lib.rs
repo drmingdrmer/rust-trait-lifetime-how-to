@@ -32,3 +32,9 @@ pub struct RefMut<'d> {
     writable: &'d mut Level,
     frozen: &'d StaticLevels,
 }
+
+#[derive(Debug)]
+pub struct LevelMap {
+    writable: Level,
+    frozen: StaticLevels,
+}
