@@ -85,11 +85,13 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::os::macos::raw::stat;
     use std::sync::Arc;
 
     use futures_util::StreamExt;
 
     use crate::map_api::MapApiRO;
+    use crate::util::assert_sync;
     use crate::Level;
     use crate::StaticLevels;
     use crate::Val;
@@ -128,6 +130,12 @@ mod tests {
 
             let got = static_levels.get(&k()).await;
             assert_eq!(got, Val(2));
+        }
+
+        {
+            let x = k();
+            let fu = static_levels.get(x.as_str());
+            let fu = assert_sync(fu);
         }
     }
 }

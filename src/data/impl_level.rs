@@ -98,6 +98,7 @@ impl<'me> MapApi<'me, String> for &'me mut Level {
 mod tests {
     use crate::map_api::MapApi;
     use crate::map_api::MapApiRO;
+    use crate::util::assert_send;
     use crate::Level;
     use crate::Val;
 
@@ -119,5 +120,11 @@ mod tests {
 
         let got = d.get(&k()).await;
         assert_eq!(got, Val(2));
+
+        /////////////
+
+        let x = k();
+        let fu = d.get(x.as_str());
+        let fu = assert_send(fu);
     }
 }

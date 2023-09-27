@@ -92,6 +92,8 @@ mod tests {
     use futures_util::StreamExt;
 
     use crate::map_api::MapApiRO;
+    use crate::util::assert_send;
+    use crate::util::assert_sync;
     use crate::Level;
     use crate::Ref;
     use crate::StaticLevels;
@@ -140,5 +142,14 @@ mod tests {
             let got = { r }.range(k()..).await.collect::<Vec<_>>().await;
             assert_eq!(got, vec![(k(), Val(3)), (k(), Val(2))]);
         }
+
+        // TODO: Error:
+        // {
+        //     let r = Ref::new(&d, &static_levels);
+        //
+        //     let x = k();
+        //     let fu = r.get(x.as_str());
+        //     let fu = assert_sync(fu);
+        // }
     }
 }

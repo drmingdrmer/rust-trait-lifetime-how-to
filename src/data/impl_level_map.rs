@@ -152,11 +152,7 @@ mod tests {
             // let x = k();
             // let fu = lm.get(x.as_str());
             //
-            // let fu = foo(fu);
-            //
-            // fn foo<T: Send>(v: T) -> T {
-            //     v
-            // }
+            // let fu = assert_send(fu);
         }
     }
 }
