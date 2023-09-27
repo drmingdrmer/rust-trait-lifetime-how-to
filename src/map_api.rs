@@ -14,13 +14,12 @@ impl MapKey for String {
     type V = Val;
 }
 
-pub trait MapApiRO<'d, K>: Send + Sync
+pub trait MapApiRO<K>: Send + Sync
 where K: MapKey
 {
     type GetFut<'f, Q>: Future<Output = K::V>
     where
         Self: 'f,
-        'd: 'f,
         K: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,
         Q: 'f;
@@ -34,7 +33,6 @@ where K: MapKey
     type RangeFut<'f, Q, R>: Future<Output = BoxStream<'f, (K, K::V)>>
     where
         Self: 'f,
-        'd: 'f,
         K: Borrow<Q>,
         R: RangeBounds<Q> + Send + Sync + Clone,
         Q: Ord + Send + Sync + ?Sized,
@@ -49,7 +47,7 @@ where K: MapKey
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub trait MapApi<'d, K>: MapApiRO<'d, K>
+pub trait MapApi<'d, K>: MapApiRO<K>
 where K: MapKey
 {
     type SetFut<'f>: Future<Output = (K::V, K::V)>

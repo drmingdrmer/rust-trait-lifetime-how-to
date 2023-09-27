@@ -25,23 +25,22 @@ impl<'d> Ref<'d> {
     }
 }
 
-impl<'ro_d, K> MapApiRO<'ro_d, K> for Ref<'ro_d>
+impl<'ro_d, K> MapApiRO<K> for Ref<'ro_d>
 where
     K: MapKey,
-    for<'him> &'him Level: MapApiRO<'him, K>,
+    for<'him> &'him Level: MapApiRO<K>,
 {
     type GetFut<'f, Q> = impl Future<Output =K::V> + 'f
         where Self: 'f,
-              'ro_d: 'f,
               K: Borrow<Q>,
               Q: Ord + Send + Sync + ?Sized,
               Q: 'f;
 
     fn get<'f, Q>(self, key: &'f Q) -> Self::GetFut<'f, Q>
     where
-        'ro_d: 'f,
         K: Borrow<Q>,
         Q: Ord + Send + Sync + ?Sized,
+        Q: 'f,
     {
         async move {
             for ld in self.iter_levels() {
